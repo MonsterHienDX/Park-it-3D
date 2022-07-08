@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Slot : MonoBehaviour
 {
+    public int slotID;
     public bool isEmpty = true;
     public bool isSelected;
     public bool isVertical;
@@ -12,5 +13,6 @@ public class Slot : MonoBehaviour
     private void Start()
     {
         isEmpty = true;
+
     }
 }

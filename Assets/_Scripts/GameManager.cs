@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class GameManager : SingletonMonobehaviour<GameManager>
 {
-    public Car selectedCar = null;
+    public Car2 selectedCar = null;
     public Slot selectedSlot = null;
     [SerializeField] private float rayRange;
     [SerializeField] private Transform levelRootTrans;
@@ -15,11 +15,11 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     private CarManager _carManager;
     private EntryManager _entryManager;
     [SerializeField] private CanvasGroup winPanelCvg;
-
+    public PathCreator mainPath;
     private void Start()
     {
         Application.targetFrameRate = 60;
-        LoadLevel();
+        // LoadLevel();
     }
     void Update()
     {
@@ -29,7 +29,7 @@ public class GameManager : SingletonMonobehaviour<GameManager>
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, rayRange))
             {
-                if (hit.collider.TryGetComponent(out Car c))
+                if (hit.collider.TryGetComponent(out Car2 c))
                     selectedCar = c;
                 if (hit.collider.TryGetComponent(out Slot slot))
                     if (slot.isEmpty)
@@ -40,16 +40,22 @@ public class GameManager : SingletonMonobehaviour<GameManager>
 
         if (selectedCar != null && selectedSlot != null)
         {
-            MoveCarToSlot(selectedCar.transform);
+            // MoveCarToSlot(selectedCar.transform);
+            selectedCar.StartMoveToSlot(selectedSlot);
             selectedSlot.isEmpty = false;
             selectedCar = null;
             selectedSlot = null;
         }
+
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+        }
+
     }
-    private void MoveCarToSlot(Transform carTrans)
-    {
-        _carManager.MoveCarToSlot(selectedCar, selectedSlot.entryTrans, selectedSlot);
-    }
+    // private void MoveCarToSlot(Transform carTrans)
+    // {
+    //     _carManager.MoveCarToSlot(selectedCar, selectedSlot.entryTrans, selectedSlot);
+    // }
 
     private void LoadLevel()
     {
@@ -83,5 +89,4 @@ public class GameManager : SingletonMonobehaviour<GameManager>
         winPanelCvg.DOFade(1f, 0.3f);
         winPanelCvg.blocksRaycasts = true;
     }
-
 }

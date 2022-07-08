@@ -29,21 +29,7 @@ public class CarManager : MonoBehaviour
 
     public void MoveCarToSlot(Car car, Transform entryTrans, Slot slot)
     {
-        //     car.MoveToPointByDOPath(car.transform.position, entryTrans.position)
-        //         .Play()
-        //         .OnComplete(() => car.MoveToPointByDOPath(car.transform.position, slot.transform.position)
-        //             .Play()
-        //         );
-
         car.MoveToEntryThenSlotByDOPath(entryTrans, slot);
-
-        // car.MoveToPoint(car.transform.position, entryTrans.position)
-        //     .Play()
-        //     .OnComplete(() =>
-        //     {
-        //         car.MoveToPoint(car.transform.position, slot.transform.position)
-        //             .Play();
-        //     });
     }
 
     private void IncreaseCarParked(object param = null)
@@ -58,9 +44,6 @@ public class CarManager : MonoBehaviour
     {
         if (_carInParkCount > 0)
             _carInParkCount--;
-
     }
-
-
 }
 

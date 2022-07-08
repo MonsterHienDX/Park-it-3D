@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using Cysharp.Threading.Tasks;
+using UnityEngine.AI;
 
 public class Car : MonoBehaviour
 {
@@ -19,7 +20,13 @@ public class Car : MonoBehaviour
     private Tween mainTween;
     private Vector3 startPos;
 
+    public NavMeshAgent agent;
+
     [SerializeField] private List<PathCreator> pathCreatorList = new List<PathCreator>();
+    private void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+    }
 
     private void Start()
     {
