@@ -289,8 +289,8 @@ public class Car : MonoBehaviour
     {
         foreach (PathCreatorMini p in pathCreatorList)
         {
-            if (slot == p.slot)
-                return p;
+            // if (slot == p.slot)
+            // return p;
         }
         return null;
     }

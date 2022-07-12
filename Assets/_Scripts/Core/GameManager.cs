@@ -17,13 +17,28 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     private SlotManager _slotManager;
     [SerializeField] private CanvasGroup winPanelCvg;
     public PathCreatorMini _mainPath;
+    public bool hasACarMoving;
+
+    private void OnEnable()
+    {
+        EventDispatcher.Instance.RegisterListener(EventID.CarMoing, CheckCarRunning);
+    }
+
+    private void OnDisable()
+    {
+        EventDispatcher.Instance.RemoveListener(EventID.CarMoing, CheckCarRunning);
+    }
+
     private void Start()
     {
         Application.targetFrameRate = 60;
         LoadLevel();
+        hasACarMoving = false;
     }
     void Update()
     {
+        if (hasACarMoving) return;
+
         if (Input.GetMouseButtonDown(0))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -36,25 +51,31 @@ public class GameManager : SingletonMonobehaviour<GameManager>
                 if (hit.collider.TryGetComponent(out Slot slot))
                     if (slot.isEmpty)
                         selectedSlot = slot;
+
+                if (hit.collider.gameObject.tag == "Road")
+                {
+                    MoveCarToStartPos();
+                }
             }
             Debug.DrawRay(Camera.main.transform.position, ray.direction * rayRange);
         }
 
         if (selectedCar != null && selectedSlot != null)
         {
-            ActionCar();
+            MoveCarToSlot();
             selectedCar = null;
             selectedSlot = null;
         }
-
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-        }
     }
 
-    private void ActionCar()
+    private void MoveCarToSlot()
     {
         selectedCar.StartMoveToSlot(selectedSlot);
+    }
+
+    private void MoveCarToStartPos()
+    {
+        selectedCar.StartMoveToStartPos();
     }
 
     private void LoadLevel()
@@ -99,5 +120,10 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     public List<Vector3> GetMainPathPointList()
     {
         return _mainPath.getPoints();
+    }
+
+    private void CheckCarRunning(object param = null)
+    {
+        hasACarMoving = (bool)param;
     }
 }

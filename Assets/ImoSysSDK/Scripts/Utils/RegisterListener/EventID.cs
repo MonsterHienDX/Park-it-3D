@@ -6,4 +6,5 @@ public enum EventID
     CarGetOutSlot,
     CarStartMove,
     CarStopMove,
+    CarMoing,
 }

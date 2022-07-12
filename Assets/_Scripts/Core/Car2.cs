@@ -46,11 +46,6 @@ public class Car2 : MonoBehaviour
         Vector3 backDir = backRotation * transform.forward;
         Physics.Raycast(this.transform.position, backDir, out RaycastHit backHit, rayRange);
         HandlePauseCar(backHit, mainSeq);
-
-        // Quaternion rightRayRotation = Quaternion.AngleAxis(90, Vector3.up);
-        // Vector3 rightRayDirection = rightRayRotation * transform.forward;
-        // Physics.Raycast(this.transform.position, rightRayDirection, out RaycastHit rightHit, rayRange);
-        // if (hi)
     }
 
     private void OnDrawGizmosSelected()
@@ -58,10 +53,6 @@ public class Car2 : MonoBehaviour
         Quaternion leftRayRotation = Quaternion.AngleAxis(270, Vector3.up);
         Vector3 leftRayDirection = leftRayRotation * transform.forward;
         Gizmos.DrawRay(transform.position, leftRayDirection * rayRange);
-
-        // Quaternion rightRayRotation = Quaternion.AngleAxis(90, Vector3.up);
-        // Vector3 rightRayDirection = rightRayRotation * transform.forward;
-        // Gizmos.DrawRay(transform.position, rightRayDirection * rayRange);
 
         Quaternion forwardRotation = Quaternion.AngleAxis(0, Vector3.up);
         Vector3 forwardDir = forwardRotation * transform.forward;
@@ -100,6 +91,7 @@ public class Car2 : MonoBehaviour
         selectedSlot = slot;
         mainSeq = MoveAroundCarPark(slot)
             .Play();
+        EventDispatcher.Instance.PostEvent(EventID.CarMoing, true);
     }
     private Sequence MoveAroundCarPark(Slot slot)
     {
@@ -128,7 +120,13 @@ public class Car2 : MonoBehaviour
                             isMoving = false;
                             slot.EnableSlot(false);
                             EventDispatcher.Instance.PostEvent(EventID.CarGetInSlot);
-                        });
+                            EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
+                        })
+                        .OnKill(() =>
+                        {
+                            EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
+                        })
+                        ;
                     ;
                     findOutSlot = true;
                 }
@@ -196,21 +194,34 @@ public class Car2 : MonoBehaviour
 
     public void StartMoveToStartPos()
     {
+        if (!this.isInsidePark) return;
+
         if (selectedSlot != null)
             selectedSlot.EnableSlot(true);
         moveBackSeq = MoveToFindFirstPos()
             .OnUpdate(() =>
             {
                 Vector3 dir = (this.transform.position - startPos).normalized;
-                Physics.Raycast(startPos, dir, out RaycastHit hit, rayRange * 2);
-                Debug.DrawRay(startPos, dir * rayRange * 2);
+                Physics.Raycast(startPos, dir, out RaycastHit hit, rayRange * 4);
+                Debug.DrawRay(startPos, dir * rayRange * 4);
                 if (hit.collider == this._collider)
                 {
                     moveBackSeq.Kill();
                     moveBackSeq = MoveToStartPos().Play();
                 }
             })
-            .Play();
+            .Play()
+            .OnComplete(() =>
+            {
+                EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
+            })
+            .OnKill(() =>
+            {
+                EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
+            })
+            ;
+        EventDispatcher.Instance.PostEvent(EventID.CarMoing, true);
+
     }
 
     private Sequence MoveToStartPos()
@@ -298,6 +309,11 @@ public class Car2 : MonoBehaviour
         if (collider.gameObject.tag == GameObjectTag.CarPark.ToString())
         {
             this.isInsidePark = false;
+        }
+
+        if (collider.gameObject.tag == GameObjectTag.Slot.ToString())
+        {
+            this.selectedSlot.EnableSlot(true);
         }
     }
 

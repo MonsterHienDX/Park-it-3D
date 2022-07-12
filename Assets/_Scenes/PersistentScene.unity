@@ -760,12 +760,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selectedCar: {fileID: 0}
   selectedSlot: {fileID: 0}
-  rayRange: 100
+  rayRange: 200
   levelRootTrans: {fileID: 895183702}
   levelPrefabList:
   - {fileID: 5686022993893961155, guid: f60d7f7a825b43745a9414e7f93b8c75, type: 3}
+  - {fileID: 5686022993893961155, guid: 0ac2221ba3d1d1a46b03da74cb854655, type: 3}
+  - {fileID: 5686022993893961155, guid: ab5dc679aeb39d14d8806a62bab82093, type: 3}
   winPanelCvg: {fileID: 201890198}
   _mainPath: {fileID: 0}
+  hasACarMoving: 0
 --- !u!4 &1535196720
 Transform:
   m_ObjectHideFlags: 0
@@ -774,7 +777,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1535196718}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -57.900665, y: -0.2743166, z: -40.395878}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

@@ -9,7 +9,6 @@ public class PathCreatorMini : MonoBehaviour
     [SerializeField]
     public List<Vector3> List_Points;
 
-    public Slot slot;
     protected Vector3 _originalTransformPosition;
     public Vector3 originalTransformPosition => _originalTransformPosition;
 
