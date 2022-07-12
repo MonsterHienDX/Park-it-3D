@@ -8,6 +8,8 @@ TagManager:
   - Slot
   - Barrier
   - Entry
+  - CarPark
+  - Road
   layers:
   - Default
   - TransparentFX

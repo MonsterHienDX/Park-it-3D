@@ -4,4 +4,5 @@
     Slot,
     Barrier,
     Entry,
+    CarPark,
 }
