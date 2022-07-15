@@ -14,7 +14,11 @@ public class Entry : MonoBehaviour
 
         slots = GetComponentsInChildren<Slot>();
 
-        foreach (Slot s in slots) s.gatePos = gateTrans.position;
+        foreach (Slot s in slots)
+        {
+            s.gatePos = gateTrans.position;
+            s.isVertical = isVertical;
+        }
     }
 
     public Slot GetSlot(int index = 0)

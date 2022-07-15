@@ -7,8 +7,8 @@ public class Slot : MonoBehaviour
     public int slotID;
     public bool isEmpty = true;
     private Collider _collider;
-
     public Vector3 gatePos;
+    public bool isVertical;
 
     private void Awake()
     {

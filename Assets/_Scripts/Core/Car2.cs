@@ -25,14 +25,6 @@ public class Car2 : MonoBehaviour
         startPos = this.transform.position;
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            StartMoveToStartPos();
-        }
-    }
-
     private void FixedUpdate()
     {
         if (!isMoving) return;
@@ -42,10 +34,10 @@ public class Car2 : MonoBehaviour
         Physics.Raycast(this.transform.position, forwardDir, out RaycastHit forwardHit, rayRange);
         HandlePauseCar(forwardHit, mainSeq);
 
-        Quaternion backRotation = Quaternion.AngleAxis(180, Vector3.up);
-        Vector3 backDir = backRotation * transform.forward;
-        Physics.Raycast(this.transform.position, backDir, out RaycastHit backHit, rayRange);
-        HandlePauseCar(backHit, mainSeq);
+        // Quaternion backRotation = Quaternion.AngleAxis(180, Vector3.up);
+        // Vector3 backDir = backRotation * transform.forward;
+        // Physics.Raycast(this.transform.position, backDir, out RaycastHit backHit, rayRange / 3);
+        // HandlePauseCar(backHit, mainSeq);
     }
 
     private void OnDrawGizmosSelected()
@@ -58,9 +50,9 @@ public class Car2 : MonoBehaviour
         Vector3 forwardDir = forwardRotation * transform.forward;
         Gizmos.DrawRay(transform.position, forwardDir * rayRange);
 
-        Quaternion backRotation = Quaternion.AngleAxis(180, Vector3.up);
-        Vector3 backDir = backRotation * transform.forward;
-        Gizmos.DrawRay(transform.position, backDir * rayRange);
+        // Quaternion backRotation = Quaternion.AngleAxis(180, Vector3.up);
+        // Vector3 backDir = backRotation * transform.forward;
+        // Gizmos.DrawRay(transform.position, backDir * rayRange / 3);
     }
 
     private void HandlePauseCar(RaycastHit forwardHit, Tween movingTween)
@@ -86,23 +78,16 @@ public class Car2 : MonoBehaviour
 
     public void StartMoveToSlot(Slot slot)
     {
+        // TODO
+        if (isInsidePark) return;
         isMoving = true;
         findOutSlot = false;
         selectedSlot = slot;
+        Debug.Log("slot.slotID: " + slot.slotID);
+        // moveBackSeq.Kill();
+        if (mainSeq != null) mainSeq.Kill();
         mainSeq = MoveAroundCarPark(slot)
-            .Play();
-        EventDispatcher.Instance.PostEvent(EventID.CarMoing, true);
-    }
-    private Sequence MoveAroundCarPark(Slot slot)
-    {
-        List<Vector3> pathPointList = CreatePathToMoveAround(this.transform.position);
-
-        Sequence s = DOTween.Sequence();
-        // Look at nearest position
-        s.Append(this.transform.DOLookAt(pathPointList[0], 0.3f));
-        s.Append(this.transform.DOPath(pathPointList.ToArray(), 10)
-            .SetEase(Ease.Linear)
-            .SetLookAt(0.03f))
+            .Play()
             .OnUpdate(() =>
             {
                 Slot slotFound = FindSelectedSlotDuringMove(slot);
@@ -111,7 +96,7 @@ public class Car2 : MonoBehaviour
                    // && (slotFound.transform.forward != this.transform.forward)
                    )
                 {
-                    Vector3 slotPos = FindSelectedSlotDuringMove(slot).transform.position;
+                    Vector3 slotPos = slotFound.transform.position;
                     this.mainSeq = MoveToSlot(slotPos)
                         .Play()
                         .OnComplete(() =>
@@ -131,6 +116,24 @@ public class Car2 : MonoBehaviour
                     findOutSlot = true;
                 }
             })
+            .OnKill(() =>
+            {
+                EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
+            });
+        EventDispatcher.Instance.PostEvent(EventID.CarMoing, true);
+    }
+
+    private Sequence MoveAroundCarPark(Slot slot)
+    {
+        List<Vector3> pathPointList = CreatePathToMoveAround(this.transform.position);
+
+        Sequence s = DOTween.Sequence();
+        // Look at nearest position
+        s.Append(this.transform.DOLookAt(pathPointList[0], 0.3f));
+        s.Append(this.transform.DOPath(pathPointList.ToArray(), 100 / _velocity)
+            .SetEase(Ease.Linear)
+            .SetLookAt(0.03f))
+
             ;
         return s;
     }
@@ -172,7 +175,7 @@ public class Car2 : MonoBehaviour
         return pathPointList;
     }
 
-    private Sequence MoveToFindFirstPos()
+    private Sequence MoveToFindStartPos()
     {
         if (!this.isInsidePark)
             return null;
@@ -187,7 +190,9 @@ public class Car2 : MonoBehaviour
         s.Append(this.transform.DOLookAt(pathPointList[0], 0.3f));
         s.Append(this.transform.DOPath(pathPointList.ToArray(), 10f)
             .SetEase(Ease.Linear)
-            .SetLookAt(0.03f));
+            .SetLookAt(0.03f))
+
+            ;
 
         return s;
     }
@@ -198,22 +203,32 @@ public class Car2 : MonoBehaviour
 
         if (selectedSlot != null)
             selectedSlot.EnableSlot(true);
-        moveBackSeq = MoveToFindFirstPos()
+        moveBackSeq = MoveToFindStartPos()
             .OnUpdate(() =>
             {
-                Vector3 dir = (this.transform.position - startPos).normalized;
+                Vector3 startPosXZ = new Vector3(startPos.x, 1f, startPos.z);
+                Vector3 currentPosXZ = new Vector3(this.transform.position.x, 1f, this.transform.position.z);
+                Vector3 dir = (currentPosXZ - startPosXZ).normalized;
                 Physics.Raycast(startPos, dir, out RaycastHit hit, rayRange * 4);
-                Debug.DrawRay(startPos, dir * rayRange * 4);
+                Debug.DrawRay(startPosXZ, dir * rayRange * 4);
                 if (hit.collider == this._collider)
                 {
                     moveBackSeq.Kill();
-                    moveBackSeq = MoveToStartPos().Play();
+                    moveBackSeq = MoveToStartPos()
+                        .Play()
+                        .OnComplete(() =>
+                        {
+                        }
+                        )
+                        ;
                 }
             })
             .Play()
             .OnComplete(() =>
             {
+
                 EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
+
             })
             .OnKill(() =>
             {
@@ -221,6 +236,7 @@ public class Car2 : MonoBehaviour
             })
             ;
         EventDispatcher.Instance.PostEvent(EventID.CarMoing, true);
+        EventDispatcher.Instance.PostEvent(EventID.CarGetOutSlot, true);
 
     }
 
@@ -259,15 +275,17 @@ public class Car2 : MonoBehaviour
                 Entry entry = blockRaycastObj.GetComponentInParent<Entry>();
                 if (entry != null)
                 {
-                    foreach (Slot s in entry.slots)
-                    {
-                        if (s.slotID == slotInput.slotID)
-                            return s;
-                    }
+                    if ((int)Vector3.Angle(this.transform.forward, entry.transform.forward) == 90)
+                        foreach (Slot s in entry.slots)
+                        {
+                            if (s.slotID == slotInput.slotID)
+                                return s;
+                        }
                 }
             }
         }
         return null;
+        // return GetSlotByRaycastAndSlotID(this.transform.position, leftRayDirection, slotInput, rayRange).GetComponent<Slot>();
     }
     private Tween TurnLeft(bool isLeft)
     {
@@ -302,6 +320,11 @@ public class Car2 : MonoBehaviour
         {
             this.isInsidePark = true;
         }
+
+        if (collider.gameObject.tag == GameObjectTag.Slot.ToString())
+        {
+            this.selectedSlot.EnableSlot(true);
+        }
     }
 
     private void OnTriggerExit(Collider collider)
@@ -317,4 +340,35 @@ public class Car2 : MonoBehaviour
         }
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (GameManager.instance.isPlaying && collision.gameObject.name.StartsWith("Car_"))
+        {
+            _ = GameManager.instance.LoseLevel();
+        }
+    }
+
+    // private GameObject GetSlotByRaycastAndSlotID(Vector3 start, Vector3 dir, Slot slotInput, float rayRange)
+    // {
+    //     Physics.Raycast(start, dir, out RaycastHit hit, rayRange);
+    //     if (hit.collider != null)
+    //     {
+    //         GameObject blockObj = hit.collider.gameObject;
+    //         Debug.LogWarning(blockObj.gameObject.name);
+    //         Debug.DrawRay(start, dir * rayRange, new Color32((byte)UnityEngine.Random.Range(0, 255), 1, 1, 255));
+    //         Slot slot = blockObj.GetComponent<Slot>();
+    //         if (blockObj.GetComponent<Slot>() != null)
+    //         {
+    //             if (slot.slotID == slotInput.slotID)
+    //                 return blockObj;
+
+    //             else
+    //                 return GetSlotByRaycastAndSlotID(blockObj.transform.position, dir, slotInput, rayRange);
+    //         }
+    //         else
+    //             return GetSlotByRaycastAndSlotID(blockObj.transform.position, dir, slotInput, rayRange);
+    //     }
+    //     else
+    //         return GetSlotByRaycastAndSlotID(start, dir, slotInput, rayRange);
+    // }
 }

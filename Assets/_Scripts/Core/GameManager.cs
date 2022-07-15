@@ -15,10 +15,11 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     private CarManager _carManager;
     private EntryManager _entryManager;
     private SlotManager _slotManager;
-    [SerializeField] private CanvasGroup winPanelCvg;
+
     public PathCreatorMini _mainPath;
     public bool hasACarMoving;
 
+    public bool isPlaying;
     private void OnEnable()
     {
         EventDispatcher.Instance.RegisterListener(EventID.CarMoing, CheckCarRunning);
@@ -31,6 +32,7 @@ public class GameManager : SingletonMonobehaviour<GameManager>
 
     private void Start()
     {
+        isPlaying = false;
         Application.targetFrameRate = 60;
         LoadLevel();
         hasACarMoving = false;
@@ -52,7 +54,7 @@ public class GameManager : SingletonMonobehaviour<GameManager>
                     if (slot.isEmpty)
                         selectedSlot = slot;
 
-                if (hit.collider.gameObject.tag == "Road")
+                if (hit.collider.gameObject.tag == "Road" && selectedCar != null)
                 {
                     MoveCarToStartPos();
                 }
@@ -80,8 +82,9 @@ public class GameManager : SingletonMonobehaviour<GameManager>
 
     private void LoadLevel()
     {
-        winPanelCvg.DOFade(0f, 0.3f);
-        winPanelCvg.blocksRaycasts = false;
+        isPlaying = true;
+        UIManager.instance.EnableWinLosePanel(false, false);
+        UIManager.instance.EnableWinLosePanel(true, false);
 
         if (currentLevel == null)
             currentLevel = Instantiate(levelPrefabList.PickRandom());
@@ -102,8 +105,9 @@ public class GameManager : SingletonMonobehaviour<GameManager>
 
     public async UniTask WinLevel()
     {
-        ShowCongratPanel();
-        await UniTask.Delay(1000);
+        isPlaying = false;
+        UIManager.instance.EnableWinLosePanel(true, true);
+        await UniTask.Delay(1500);
 
         if (levelRootTrans.childCount > 0)
             Destroy(levelRootTrans.GetChild(0).gameObject);
@@ -111,10 +115,16 @@ public class GameManager : SingletonMonobehaviour<GameManager>
         LoadLevel();
     }
 
-    private void ShowCongratPanel()
+    public async UniTask LoseLevel()
     {
-        winPanelCvg.DOFade(1f, 0.3f);
-        winPanelCvg.blocksRaycasts = true;
+        isPlaying = false;
+        UIManager.instance.EnableWinLosePanel(false, true);
+        await UniTask.Delay(1500);
+
+        if (levelRootTrans.childCount > 0)
+            Destroy(levelRootTrans.GetChild(0).gameObject);
+        currentLevel = null;
+        LoadLevel();
     }
 
     public List<Vector3> GetMainPathPointList()

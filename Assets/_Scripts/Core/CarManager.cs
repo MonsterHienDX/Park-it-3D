@@ -12,11 +12,13 @@ public class CarManager : MonoBehaviour
     private void OnEnable()
     {
         EventDispatcher.Instance.RegisterListener(EventID.CarGetInSlot, IncreaseCarParked);
+        EventDispatcher.Instance.RegisterListener(EventID.CarGetOutSlot, DecreaseCarParked);
     }
 
     private void OnDisable()
     {
         EventDispatcher.Instance.RemoveListener(EventID.CarGetInSlot, IncreaseCarParked);
+        EventDispatcher.Instance.RemoveListener(EventID.CarGetOutSlot, DecreaseCarParked);
     }
 
     public void Init()
