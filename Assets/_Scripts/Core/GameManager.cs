@@ -50,14 +50,14 @@ public class GameManager : SingletonMonobehaviour<GameManager>
                 if (hit.collider.TryGetComponent(out Car2 c))
                     if (!c.isMoving)
                         selectedCar = c;
-                if (hit.collider.TryGetComponent(out Slot slot))
+                if (hit.collider.TryGetComponent(out Slot slot) && selectedCar != null)
                     if (slot.isEmpty)
                         selectedSlot = slot;
 
-                if (hit.collider.gameObject.tag == "Road" && selectedCar != null)
-                {
-                    MoveCarToStartPos();
-                }
+                // if (hit.collider.gameObject.tag == "Road" && selectedCar != null)
+                // {
+                //     MoveCarToStartPos();
+                // }
             }
             Debug.DrawRay(Camera.main.transform.position, ray.direction * rayRange);
         }
@@ -83,11 +83,22 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     private void LoadLevel()
     {
         isPlaying = true;
+        DOTween.KillAll();
         UIManager.instance.EnableWinLosePanel(false, false);
         UIManager.instance.EnableWinLosePanel(true, false);
 
         if (currentLevel == null)
-            currentLevel = Instantiate(levelPrefabList.PickRandom());
+        {
+            if (UserData.LevelNumber < levelPrefabList.Count)
+            {
+                currentLevel = Instantiate(levelPrefabList[UserData.LevelNumber]);
+            }
+            else
+            {
+                currentLevel = Instantiate(levelPrefabList.PickRandom());
+            }
+        }
+        UserData.LevelNumber++;
 
         currentLevel.transform.SetParent(levelRootTrans);
 
@@ -107,7 +118,7 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     {
         isPlaying = false;
         UIManager.instance.EnableWinLosePanel(true, true);
-        await UniTask.Delay(1500);
+        await UniTask.Delay(2500);
 
         if (levelRootTrans.childCount > 0)
             Destroy(levelRootTrans.GetChild(0).gameObject);
@@ -119,7 +130,7 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     {
         isPlaying = false;
         UIManager.instance.EnableWinLosePanel(false, true);
-        await UniTask.Delay(1500);
+        await UniTask.Delay(2500);
 
         if (levelRootTrans.childCount > 0)
             Destroy(levelRootTrans.GetChild(0).gameObject);
@@ -135,5 +146,10 @@ public class GameManager : SingletonMonobehaviour<GameManager>
     private void CheckCarRunning(object param = null)
     {
         hasACarMoving = (bool)param;
+    }
+
+    public void MovePreviousCarToStartPos()
+    {
+        _carManager.MovePreviousCarToStartPos();
     }
 }

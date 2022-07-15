@@ -9,6 +9,7 @@ public class Car2 : MonoBehaviour
     public bool isMoving;
     private Sequence mainSeq;
     [SerializeField] private float rayRange;
+    [SerializeField] private float forceIntensity;
     private bool findOutSlot;
     public bool isInsidePark = false;
     private Vector3 startPos;
@@ -97,6 +98,7 @@ public class Car2 : MonoBehaviour
                    )
                 {
                     Vector3 slotPos = slotFound.transform.position;
+                    this.mainSeq.Kill();
                     this.mainSeq = MoveToSlot(slotPos)
                         .Play()
                         .OnComplete(() =>
@@ -121,11 +123,14 @@ public class Car2 : MonoBehaviour
                 EventDispatcher.Instance.PostEvent(EventID.CarMoing, false);
             });
         EventDispatcher.Instance.PostEvent(EventID.CarMoing, true);
+        EventDispatcher.Instance.PostEvent(EventID.CarStartMove, this);
+
     }
 
     private Sequence MoveAroundCarPark(Slot slot)
     {
-        List<Vector3> pathPointList = CreatePathToMoveAround(this.transform.position);
+        // List<Vector3> pathPointList = CreatePathToMoveAround(this.transform.position);
+        List<Vector3> pathPointList = GameManager.instance.GetMainPathPointList();
 
         Sequence s = DOTween.Sequence();
         // Look at nearest position
@@ -144,20 +149,9 @@ public class Car2 : MonoBehaviour
         List<Vector3> mainPathPoints = GameManager.instance.GetMainPathPointList();
 
         // Find the nearest position
-        float[] disToPathPoints = new float[mainPathPoints.Count];
-        float minDis = Vector3.Distance(startPos, mainPathPoints[0]);
-        Vector3 nearestPoint = mainPathPoints[0];
-        int nearestPointIndex = 0;
-        for (int i = 0; i < mainPathPoints.Count; i++)
-        {
-            disToPathPoints[i] = Vector3.Distance(startPos, mainPathPoints[i]);
-            if (disToPathPoints[i] < minDis)
-            {
-                minDis = disToPathPoints[i];
-                nearestPoint = mainPathPoints[i];
-                nearestPointIndex = i;
-            }
-        }
+        Vector3 nearestPoint;
+        int nearestPointIndex;
+        FindNearestPointInPath(startPos, mainPathPoints, out nearestPoint, out nearestPointIndex);
 
         // Make the path for car to go around the car park from the position that nearest with start position
         List<Vector3> pathPointList = new List<Vector3>();
@@ -175,6 +169,24 @@ public class Car2 : MonoBehaviour
         return pathPointList;
     }
 
+    private void FindNearestPointInPath(Vector3 startPos, List<Vector3> mainPathPoints, out Vector3 nearestPoint, out int nearestPointIndex)
+    {
+        float[] disToPathPoints = new float[mainPathPoints.Count];
+        float minDis = Vector3.Distance(startPos, mainPathPoints[0]);
+        nearestPoint = mainPathPoints[0];
+        nearestPointIndex = 0;
+        for (int i = 0; i < mainPathPoints.Count; i++)
+        {
+            disToPathPoints[i] = Vector3.Distance(startPos, mainPathPoints[i]);
+            if (disToPathPoints[i] < minDis)
+            {
+                minDis = disToPathPoints[i];
+                nearestPoint = mainPathPoints[i];
+                nearestPointIndex = i;
+            }
+        }
+    }
+
     private Sequence MoveToFindStartPos()
     {
         if (!this.isInsidePark)
@@ -186,6 +198,10 @@ public class Car2 : MonoBehaviour
             s.Append(MoveBackToEntry());
 
         List<Vector3> pathPointList = CreatePathToMoveAround(selectedSlot.gatePos);
+
+        // List<Vector3> mainPathPoints = GameManager.instance.GetMainPathPointList();
+
+        // FindNearestPointInPath(startPos, mainPathPoints, out Vector3 nearestPoint, out int nearestPointIndex);
 
         s.Append(this.transform.DOLookAt(pathPointList[0], 0.3f));
         s.Append(this.transform.DOPath(pathPointList.ToArray(), 10f)
@@ -209,8 +225,8 @@ public class Car2 : MonoBehaviour
                 Vector3 startPosXZ = new Vector3(startPos.x, 1f, startPos.z);
                 Vector3 currentPosXZ = new Vector3(this.transform.position.x, 1f, this.transform.position.z);
                 Vector3 dir = (currentPosXZ - startPosXZ).normalized;
-                Physics.Raycast(startPos, dir, out RaycastHit hit, rayRange * 4);
-                Debug.DrawRay(startPosXZ, dir * rayRange * 4);
+                Physics.Raycast(startPos, dir, out RaycastHit hit, rayRange * 2.5f);
+                Debug.DrawRay(startPosXZ, dir * rayRange * 2.5f);
                 if (hit.collider == this._collider)
                 {
                     moveBackSeq.Kill();
@@ -269,7 +285,6 @@ public class Car2 : MonoBehaviour
         if (leftHit.collider != null)
         {
             blockRaycastObj = leftHit.collider.gameObject;
-            Debug.LogWarning("_blockRaycastObj left: " + blockRaycastObj.name);
             if (blockRaycastObj.gameObject.tag == GameObjectTag.Entry.ToString())
             {
                 Entry entry = blockRaycastObj.GetComponentInParent<Entry>();
@@ -345,6 +360,10 @@ public class Car2 : MonoBehaviour
         if (GameManager.instance.isPlaying && collision.gameObject.name.StartsWith("Car_"))
         {
             _ = GameManager.instance.LoseLevel();
+            collision.gameObject.GetComponent<AudioSource>().Play();
+            mainSeq.Kill();
+            moveBackSeq.Kill();
+            this.GetComponent<Rigidbody>().AddForce(this.transform.forward * forceIntensity, ForceMode.Impulse);
         }
     }
 
